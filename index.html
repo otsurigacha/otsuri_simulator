@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>お釣りガチャ シミュレータ＆硬貨コレクション（全397種）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+          },
+          animation: {
+            'pop-in': 'popIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'shimmer': 'shimmer 2.5s linear infinite',
+            'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            popIn: {
+              '0%': { opacity: '0', transform: 'translateY(16px) scale(0.88)' },
+              '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+            },
+            shimmer: {
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' },
+            },
+            pulseGlow: {
+              '0%, 100%': { boxShadow: '0 0 14px rgba(245, 158, 11, 0.35)' },
+              '50%': { boxShadow: '0 0 28px rgba(245, 158, 11, 0.75)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-4px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #090d16;
+      color: #f1f5f9;
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* レアリティ別カード演出 */
+    .card-N {
+      background: linear-gradient(145deg, #161e2e 0%, #0f1623 100%);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    .card-R {
+      background: linear-gradient(145deg, #0f293a 0%, #0c1926 100%);
+      border: 1.5px solid rgba(34, 211, 238, 0.55);
+      box-shadow: 0 4px 18px rgba(6, 182, 212, 0.16);
+    }
+    .card-SR {
+      background: linear-gradient(145deg, #2b1d0e 0%, #1a1226 100%);
+      border: 1.5px solid rgba(251, 191, 36, 0.8);
+      box-shadow: 0 4px 24px rgba(245, 158, 11, 0.28);
+    }
+    .card-SSR {
+      background: linear-gradient(135deg, #2c1038 0%, #17163b 50%, #331910 100%);
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      position: relative;
+      box-shadow: 0 0 28px rgba(232, 121, 249, 0.45), 0 0 12px rgba(250, 204, 21, 0.35);
+    }
+    .card-SSR::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      z-index: -1;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #ff4d4d, #f9cb28, #22d3ee, #c084fc, #ff4d4d);
+      background-size: 300% 300%;
+      animation: shimmer 3s linear infinite;
+    }
+
+    /* 硬貨ビジュアル */
+    .coin-visual {
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-weight: 800;
+      user-select: none;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.45), inset 0 -3px 5px rgba(0,0,0,0.45), 0 4px 10px rgba(0,0,0,0.45);
+    }
+    .coin-1 {
+      background: radial-gradient(circle at 30% 30%, #f8fafc, #cbd5e1 60%, #94a3b8);
+      color: #1e293b;
+      border: 2px solid #e2e8f0;
+    }
+    .coin-5 {
+      background: radial-gradient(circle at 30% 30%, #fef08a, #eab308 60%, #a16207);
+      color: #422006;
+      border: 2px solid #fde047;
+    }
+    .coin-10 {
+      background: radial-gradient(circle at 30% 30%, #fdba74, #c2410c 65%, #7c2d12);
+      color: #fff7ed;
+      border: 2px solid #fb923c;
+    }
+    .coin-10-giza {
+      border: 2.5px dashed #fed7aa;
+    }
+    .coin-50 {
+      background: radial-gradient(circle at 30% 30%, #f1f5f9, #94a3b8 65%, #64748b);
+      color: #0f172a;
+      border: 2px solid #cbd5e1;
+    }
+    .coin-100 {
+      background: radial-gradient(circle at 30% 30%, #ffffff, #cbd5e1 65%, #64748b);
+      color: #0f172a;
+      border: 2px solid #e2e8f0;
+    }
+    .coin-500 {
+      background: radial-gradient(circle at 30% 30%, #fef9c3, #d4af37 65%, #854d0e);
+      color: #271603;
+      border: 2px solid #fde047;
+    }
+    .coin-500-bicolor {
+      background: radial-gradient(circle at 35% 35%, #fef08a, #eab308 65%, #a16207);
+      color: #271603;
+      border: 4px solid #cbd5e1;
+    }
+    .coin-hole::after {
+      content: "";
+      position: absolute;
+      width: 26%;
+      height: 26%;
+      border-radius: 9999px;
+      background-color: #0f172a;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    /* カスタムスクロールバー */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
+
+  <!-- ヘッダー -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-lg">
+          ¥
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+            お釣りガチャ <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">全397種</span>
+          </h1>
+          <p class="text-[11px] text-slate-400">造幣局発行枚数準拠・現行硬貨年号コレクター</p>
+        </div>
+      </div>
+
+      <!-- ステータス＆サウンド切替 -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 flex items-center gap-2">
+          <span class="text-xs text-slate-400">図鑑達成率</span>
+          <span id="header-progress-text" class="text-sm font-extrabold text-amber-400">0 / 397</span>
+          <span id="header-progress-pct" class="text-xs text-slate-400">(0.0%)</span>
+        </div>
+        <button id="sound-toggle-btn" onclick="toggleSound()" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition" title="効果音オン/オフ">
+          <span id="sound-icon" class="text-sm font-bold">🔊 ON</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- メインナビゲーションタブ -->
+    <nav class="max-w-6xl mx-auto px-4 flex gap-1 sm:gap-2 border-t border-slate-900">
+      <button onclick="switchTab('register')" id="tab-btn-register" class="tab-btn flex-1 sm:flex-none px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-amber-400 text-amber-400 transition flex items-center justify-center gap-1.5">
+        <span>🧾</span> レジでお会計
+      </button>
+      <button onclick="switchTab('album')" id="tab-btn-album" class="tab-btn flex-1 sm:flex-none px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center justify-center gap-1.5">
+        <span>📖</span> 硬貨アルバム
+      </button>
+      <button onclick="switchTab('history')" id="tab-btn-history" class="tab-btn flex-1 sm:flex-none px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center justify-center gap-1.5">
+        <span>📊</span> 履歴・データ管理
+      </button>
+    </nav>
+  </header>
+
+  <!-- トースト通知エリア -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- メインコンテンツ -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+
+    <!-- ==========================================
+         TAB 1: レジでお会計
+    =========================================== -->
+    <section id="tab-register" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左カラム：会計金額 & 支払い金種選択 -->
+        <div class="lg:col-span-7 space-y-5">
+          
+          <!-- 会計金額設定カード -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <label for="bill-input" class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                1. 会計金額を入力
+              </label>
+              <button onclick="setRandomBill()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-cyan-300 border border-slate-700 transition active:scale-95">
+                🎲 ランダム金額
+              </button>
+            </div>
+
+            <div class="relative flex items-center mb-4">
+              <span class="absolute left-4 text-xl font-extrabold text-slate-400">¥</span>
+              <input id="bill-input" type="number" min="1" max="99999" value="111" oninput="onBillInputChange()"
+                class="w-full bg-slate-950 border-2 border-slate-700 focus:border-amber-400 rounded-xl py-3 pl-10 pr-12 text-2xl sm:text-3xl font-black text-white outline-none transition" />
+              <span class="absolute right-4 text-sm font-bold text-slate-400">円</span>
+            </div>
+
+            <!-- お釣り硬貨枚数最大化プリセット -->
+            <div>
+              <p class="text-[11px] font-bold text-slate-400 mb-2">⚡ お釣り硬貨枚数最大化プリセット（ワンタップ設定）</p>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button onclick="applyPreset(111, {1000: 1})" class="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800/90 border border-slate-800 hover:border-amber-500/50 text-left transition group">
+                  <div class="text-xs font-extrabold text-amber-300 group-hover:text-amber-200">111円 → 千円札</div>
+                  <div class="text-[11px] text-slate-400">釣889円 (<span class="text-emerald-400 font-bold">硬貨13枚</span>)</div>
+                </button>
+                <button onclick="applyPreset(1, {1000: 1})" class="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800/90 border border-slate-800 hover:border-amber-500/50 text-left transition group">
+                  <div class="text-xs font-extrabold text-amber-300 group-hover:text-amber-200">1円 → 千円札</div>
+                  <div class="text-[11px] text-slate-400">釣999円 (<span class="text-emerald-400 font-bold">硬貨15枚</span>)</div>
+                </button>
+                <button onclick="applyPreset(11, {500: 1})" class="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800/90 border border-slate-800 hover:border-amber-500/50 text-left transition group">
+                  <div class="text-xs font-extrabold text-amber-300 group-hover:text-amber-200">11円 → 500円玉</div>
+                  <div class="text-[11px] text-slate-400">釣489円 (<span class="text-emerald-400 font-bold">硬貨12枚</span>)</div>
+                </button>
+                <button onclick="applyMaxChangeRandomPreset()" class="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 hover:from-amber-500/30 hover:to-orange-500/20 border border-amber-500/40 text-left transition">
+                  <div class="text-xs font-extrabold text-amber-300">🔥 ランダム15枚釣</div>
+                  <div class="text-[11px] text-amber-200/80">端数999円自動セット</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 支払い金種セレクター（9金種） -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <span class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                2. 支払うお金を組み合わせる（9金種）
+              </span>
+              <div class="flex items-center gap-1.5">
+                <button onclick="payExactChange()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition">
+                  ぴったり
+                </button>
+                <button onclick="payOptimizeMaxCoins()" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-xs font-bold text-amber-300 border border-amber-500/40 transition">
+                  お釣り最大化払い
+                </button>
+                <button onclick="clearPayment()" class="px-2.5 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-xs font-bold text-rose-300 border border-rose-500/30 transition">
+                  クリア
+                </button>
+              </div>
+            </div>
+
+            <div id="denomination-grid" class="grid grid-cols-3 gap-2.5">
+              <!-- JSで9金種ボタンを動的生成 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 右カラム：お会計モニター & リアルタイムお釣り内訳 -->
+        <div class="lg:col-span-5 flex flex-col gap-5">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex-1 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">CASH REGISTER PREVIEW</span>
+                <span id="register-status-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  お会計可能
+                </span>
+              </div>
+
+              <!-- 金額サマリー -->
+              <div class="space-y-3 bg-slate-950 rounded-xl p-4 border border-slate-800/80 mb-4">
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-400">会計金額</span>
+                  <span id="preview-bill" class="font-bold text-white text-lg">¥111</span>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-slate-400">お預かり（支払合計）</span>
+                  <span id="preview-paid" class="font-bold text-cyan-300 text-lg">¥1,000</span>
+                </div>
+                <div class="border-t border-slate-800 pt-2.5 flex justify-between items-baseline">
+                  <span class="text-sm font-bold text-slate-200">お釣り金額</span>
+                  <span id="preview-change" class="text-2xl sm:text-3xl font-black text-amber-400">¥889</span>
+                </div>
+              </div>
+
+              <!-- 返ってくるお釣りの最小枚数内訳 -->
+              <div class="mb-5">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-slate-300">返ってくるお釣り内訳（最小枚数計算）</span>
+                  <span id="preview-coin-count" class="text-xs font-extrabold text-emerald-400">硬貨 13枚</span>
+                </div>
+                <div id="change-breakdown-box" class="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 min-h-[116px] flex flex-col justify-center">
+                  <!-- JSでお釣り硬貨・紙幣のリアルタイム内訳を描画 -->
+                </div>
+              </div>
+            </div>
+
+            <!-- お会計実行ボタン -->
+            <div class="space-y-2">
+              <button id="checkout-btn" onclick="executeCheckout()"
+                class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-base sm:text-lg shadow-lg shadow-amber-500/25 transition transform active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <span>🎰</span>
+                <span id="checkout-btn-label">お会計して硬貨13枚をガチャる！</span>
+              </button>
+              <p class="text-[11px] text-center text-slate-500">
+                ※お釣りの硬貨（1円〜500円）がCSVの出現確率に基づき1枚ずつ抽選されます
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ガチャ結果演出ステージ -->
+      <div id="gacha-result-section" class="hidden bg-slate-900/95 border border-slate-700/80 rounded-2xl p-5 sm:p-6 shadow-2xl">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-5">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xl">✨</span>
+              <h2 class="text-lg sm:text-xl font-black text-white">お釣りガチャ獲得結果</h2>
+              <span id="result-new-count-badge" class="hidden text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-rose-500 text-white animate-bounce">
+                NEW!
+              </span>
+            </div>
+            <p id="result-summary-text" class="text-xs text-slate-400 mt-1">
+              会計 ¥111 / 支払 ¥1,000 → お釣り ¥889（硬貨 13枚獲得）
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="executeCheckout()" class="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-extrabold transition">
+              🔁 同じ条件でもう1回
+            </button>
+          </div>
+        </div>
+
+        <!-- 獲得カード一覧グリッド -->
+        <div id="gacha-cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+          <!-- JSでカード描画 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         TAB 2: 硬貨アルバム
+    =========================================== -->
+    <section id="tab-album" class="hidden space-y-5">
+      <!-- 全体進捗バー -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex flex-wrap items-end justify-between gap-2 mb-2">
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-white">現行硬貨コレクション図鑑（全397種）</h2>
+            <p class="text-xs text-slate-400">昭和・平成・令和の年号別硬貨コンプリートを目指そう</p>
+          </div>
+          <div class="text-right">
+            <span id="album-progress-count" class="text-xl font-black text-amber-400">0</span>
+            <span class="text-xs text-slate-400 font-bold">/ 397 種 (<span id="album-progress-pct">0.0%</span>)</span>
+          </div>
+        </div>
+        <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+          <div id="album-progress-bar" class="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- フィルターバー -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+        <!-- 額面タブ -->
+        <div class="flex flex-wrap gap-1.5" id="album-denom-filters">
+          <button onclick="setAlbumFilter('denom', 'ALL')" data-denom="ALL" class="denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-extrabold bg-amber-500 text-slate-950 transition">すべて (397)</button>
+          <button onclick="setAlbumFilter('denom', 1)" data-denom="1" class="denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">1円玉 (71)</button>
+          <button onclick="setAlbumFilter('denom', 5)" data-denom="5" class="denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">5円玉 (75)</button>
+          <button onclick="setAlbumFilter('denom', 10)" data-denom="10" class="denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">10円玉 (75)</button>
+          <button onclick="setAlbumFilter('denom', 50)" data-denom="50" class="denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">50円玉 (71)</button>
+          <button onclick="setAlbumFilter('denom', 100)" data-denom="100" class="denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">100円玉 (59)</button>
+          <button onclick="setAlbumFilter('denom', 500)" data-denom="500" class="denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">500円玉 (46)</button>
+        </div>
+
+        <!-- 元号・レアリティ・所持状態フィルター -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-800/80">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-slate-400 font-bold shrink-0">元号:</span>
+            <select id="filter-era" onchange="setAlbumFilter('era', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-200 outline-none">
+              <option value="ALL">すべての元号</option>
+              <option value="昭和">昭和 (1949〜1989)</option>
+              <option value="平成">平成 (1989〜2019)</option>
+              <option value="令和">令和 (2019〜2024)</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-slate-400 font-bold shrink-0">レア度:</span>
+            <select id="filter-rarity" onchange="setAlbumFilter('rarity', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-200 outline-none">
+              <option value="ALL">すべてのレアリティ</option>
+              <option value="SSR">SSR（特年・超希少）</option>
+              <option value="SR">SR（希少）</option>
+              <option value="R">R（やや希少）</option>
+              <option value="N">N（通常流通）</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs text-slate-400 font-bold shrink-0">所持:</span>
+            <select id="filter-owned" onchange="setAlbumFilter('owned', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-200 outline-none">
+              <option value="ALL">すべて表示</option>
+              <option value="OWNED">所持済みのみ</option>
+              <option value="UNOWNED">未所持のみ</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- フィルター該当件数表示 -->
+      <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+        <span id="album-filter-summary">表示中: 397種</span>
+        <span>※カードをタップすると詳細データを確認できます</span>
+      </div>
+
+      <!-- アルバムグリッド -->
+      <div id="album-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+        <!-- JSで図鑑カード描画 -->
+      </div>
+    </section>
+
+    <!-- ==========================================
+         TAB 3: 履歴・データ管理
+    =========================================== -->
+    <section id="tab-history" class="hidden space-y-6">
+      
+      <!-- レアリティ別＆額面別コンプリート率 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- レアリティ別達成率 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <h3 class="text-base font-black text-white flex items-center gap-2">
+            <span>🏆</span> レアリティ別コンプリート率
+          </h3>
+          <div id="rarity-stats-container" class="space-y-3.5">
+            <!-- JSでSSR/SR/R/Nのバーを描画 -->
+          </div>
+        </div>
+
+        <!-- プレイ統計＆セーブデータ管理 -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4">
+          <div>
+            <h3 class="text-base font-black text-white flex items-center gap-2 mb-4">
+              <span>💾</span> プレイ統計・セーブデータ管理
+            </h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                <div class="text-[11px] text-slate-400">累計お会計回数</div>
+                <div id="stat-total-checkouts" class="text-xl font-black text-white mt-0.5">0 回</div>
+              </div>
+              <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                <div class="text-[11px] text-slate-400">累計獲得硬貨枚数</div>
+                <div id="stat-total-coins" class="text-xl font-black text-cyan-300 mt-0.5">0 枚</div>
+              </div>
+              <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                <div class="text-[11px] text-slate-400">累計お釣り総額</div>
+                <div id="stat-total-change-yen" class="text-xl font-black text-amber-400 mt-0.5">¥0</div>
+              </div>
+              <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                <div class="text-[11px] text-slate-400">オートセーブ状態</div>
+                <div class="text-xs font-bold text-emerald-400 mt-1.5 flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span> localStorage保存済
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 安全な2段階データ初期化UI -->
+          <div class="border-t border-slate-800 pt-4">
+            <div id="reset-step-1" class="flex items-center justify-between gap-3">
+              <span class="text-xs text-slate-400">図鑑と履歴を最初からやり直す</span>
+              <button onclick="showResetConfirm()" class="px-3.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 text-xs font-bold transition">
+                🗑️ データを初期化
+              </button>
+            </div>
+            <div id="reset-step-2" class="hidden bg-rose-950/50 border border-rose-500/50 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+              <span class="text-xs font-bold text-rose-200">本当にすべての獲得データを削除しますか？</span>
+              <div class="flex items-center gap-2">
+                <button onclick="cancelReset()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200">
+                  キャンセル
+                </button>
+                <button onclick="confirmResetData()" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-xs font-extrabold text-white">
+                  完全に初期化する
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 直近30件の会計・お釣り獲得履歴 -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-black text-white flex items-center gap-2">
+            <span>📜</span> 直近30件の会計・お釣り獲得履歴
+          </h3>
+          <span id="history-count-badge" class="text-xs font-bold text-slate-400">0 / 30 件</span>
+        </div>
+        <div id="history-list" class="space-y-3">
+          <!-- JSで履歴アイテム描画 -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 硬貨詳細モーダル -->
+  <div id="coin-detail-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onclick="closeCoinModal(event)">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl relative" onclick="event.stopPropagation()">
+      <button onclick="closeCoinModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center font-bold">
+        ✕
+      </button>
+      <div id="modal-body" class="space-y-4">
+        <!-- JSで詳細注入 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * 1. 全397種の日本硬貨マスターデータ生成エンジン（造幣局 年銘別貨幣製造枚数準拠）
+     *    - 1円玉: 71種（昭和30〜64年※43年除く、平成1〜31年、令和1〜6年）
+     *      ※平成20年 1円玉（発行枚数 134,811千枚、確率 0.304%）は「R」で補完
+     *    - 5円玉: 75種（昭和24〜64年※29〜31年除く、平成1〜31年、令和1〜6年）
+     *    - 10円玉: 75種（昭和26〜64年※31年除く、平成1〜31年、令和1〜6年）
+     *    - 50円玉: 71種（無孔昭和30〜33年[4] + ニッケル有孔昭和34〜41年[8] + 白銅昭和42〜63年[22] + 平成1〜31年[31] + 令和1〜6年[6]）
+     *      ※昭和62年 50円玉（775千枚）は「SSR」
+     *    - 100円玉: 59種（昭和42〜63年[22] + 平成1〜31年[31] + 令和1〜6年[6]）
+     *    - 500円玉: 46種（白銅昭和57〜平成11年[19] + ニッケル黄銅平成12〜令和3年[23] + バイカラー令和3〜6年[4]）
+     *    合計: 71 + 75 + 75 + 71 + 59 + 46 = 397種
+     * =========================================================================
+     */
+    const RAW_MINTAGE_DATA = {
+      1: [
+        // [era, eraYear, westernYear, mintageThousand, note, forcedRarity]
+        ['昭和', 30, 1955, 381700, '現行アルミ1円貨 初年度'],
+        ['昭和', 31, 1956, 500900, ''],
+        ['昭和', 32, 1957, 492000, ''],
+        ['昭和', 33, 1958, 374900, ''],
+        ['昭和', 34, 1959, 208600, ''],
+        ['昭和', 35, 1960, 300000, ''],
+        ['昭和', 36, 1961, 432400, ''],
+        ['昭和', 37, 1962, 572000, ''],
+        ['昭和', 38, 1963, 788700, ''],
+        ['昭和', 39, 1964, 1665100, '東京オリンピック開催年'],
+        ['昭和', 40, 1965, 1743256, ''],
+        ['昭和', 41, 1966, 807344, ''],
+        ['昭和', 42, 1967, 220600, ''],
+        // 昭和43年は製造なし
+        ['昭和', 44, 1969, 184700, ''],
+        ['昭和', 45, 1970, 556400, '大阪万博開催年'],
+        ['昭和', 46, 1971, 904950, ''],
+        ['昭和', 47, 1972, 1274950, ''],
+        ['昭和', 48, 1973, 1470000, ''],
+        ['昭和', 49, 1974, 1750000, ''],
+        ['昭和', 50, 1975, 1656150, ''],
+        ['昭和', 51, 1976, 928850, ''],
+        ['昭和', 52, 1977, 895000, ''],
+        ['昭和', 53, 1978, 864000, ''],
+        ['昭和', 54, 1979, 1015000, ''],
+        ['昭和', 55, 1980, 1145000, ''],
+        ['昭和', 56, 1981, 1206000, ''],
+        ['昭和', 57, 1982, 1017000, ''],
+        ['昭和', 58, 1983, 1086000, ''],
+        ['昭和', 59, 1984, 981850, ''],
+        ['昭和', 60, 1985, 837150, ''],
+        ['昭和', 61, 1986, 417960, ''],
+        ['昭和', 62, 1987, 955775, ''],
+        ['昭和', 63, 1988, 1269042, ''],
+        ['昭和', 64, 1989, 116100, '昭和最終年（7日間のみ）'],
+        ['平成', 1, 1989, 2366970, '平成元年・消費税3%導入'],
+        ['平成', 2, 1990, 2768953, '1円玉史上最多発行年'],
+        ['平成', 3, 1991, 2301120, ''],
+        ['平成', 4, 1992, 1299130, ''],
+        ['平成', 5, 1993, 1261240, ''],
+        ['平成', 6, 1994, 1040767, ''],
+        ['平成', 7, 1995, 1041874, ''],
+        ['平成', 8, 1996, 942213, ''],
+        ['平成', 9, 1997, 783086, '消費税5%引き上げ年'],
+        ['平成', 10, 1998, 452612, ''],
+        ['平成', 11, 1999, 67120, ''],
+        ['平成', 12, 2000, 12026, ''],
+        ['平成', 13, 2001, 8024, ''],
+        ['平成', 14, 2002, 9667, ''],
+        ['平成', 15, 2003, 117406, ''],
+        ['平成', 16, 2004, 52903, ''],
+        ['平成', 17, 2005, 30029, ''],
+        ['平成', 18, 2006, 129594, ''],
+        ['平成', 19, 2007, 223904, ''],
+        ['平成', 20, 2008, 134811, '発行枚数134,811千枚（レア度R補完）', 'R'],
+        ['平成', 21, 2009, 48003, ''],
+        ['平成', 22, 2010, 7905, ''],
+        ['平成', 23, 2011, 456, '特年・ミントセット限定流通'],
+        ['平成', 24, 2012, 659, '特年・ミントセット限定流通'],
+        ['平成', 25, 2013, 554, '特年・ミントセット限定流通'],
+        ['平成', 26, 2014, 124013, '消費税8%引き上げで一般流通復活'],
+        ['平成', 27, 2015, 82004, ''],
+        ['平成', 28, 2016, 574, '特年・ミントセット限定流通'],
+        ['平成', 29, 2017, 477, '特年・ミントセット限定流通'],
+        ['平成', 30, 2018, 440, '現行1円玉最少発行の超特年'],
+        ['平成', 31, 2019, 566, '平成最終年・ミントセット限定'],
+        ['令和', 1, 2019, 502, '令和元年・ミントセット限定'],
+        ['令和', 2, 2020, 528, '特年・ミントセット限定'],
+        ['令和', 3, 2021, 845, '特年・ミントセット限定'],
+        ['令和', 4, 2022, 574, '特年・ミントセット限定'],
+        ['令和', 5, 2023, 463, '特年・ミントセット限定'],
+        ['令和', 6, 2024, 511, '特年・ミントセット限定'],
+      ],
+      5: [
+        ['昭和', 24, 1949, 111896, 'フデ五（楷書体・穴あき初年度）'],
+        ['昭和', 25, 1950, 181824, 'フデ五（楷書体）'],
+        ['昭和', 26, 1951, 197980, 'フデ五（楷書体）'],
+        ['昭和', 27, 1952, 55000, 'フデ五（楷書体）'],
+        ['昭和', 28, 1953, 45000, 'フデ五（楷書体）'],
+        ['昭和', 32, 1957, 10000, 'フデ五（楷書体・特年）'],
+        ['昭和', 33, 1958, 50000, 'フデ五（楷書体最終年）'],
+        ['昭和', 34, 1959, 33000, 'ゴシック体変更初年度'],
+        ['昭和', 35, 1960, 34800, ''],
+        ['昭和', 36, 1961, 61000, ''],
+        ['昭和', 37, 1962, 126700, ''],
+        ['昭和', 38, 1963, 171800, ''],
+        ['昭和', 39, 1964, 379700, ''],
+        ['昭和', 40, 1965, 384200, ''],
+        ['昭和', 41, 1966, 163100, ''],
+        ['昭和', 42, 1967, 26000, ''],
+        ['昭和', 43, 1968, 114000, ''],
+        ['昭和', 44, 1969, 240000, ''],
+        ['昭和', 45, 1970, 340000, ''],
+        ['昭和', 46, 1971, 362050, ''],
+        ['昭和', 47, 1972, 562950, ''],
+        ['昭和', 48, 1973, 745000, ''],
+        ['昭和', 49, 1974, 950000, ''],
+        ['昭和', 50, 1975, 970000, '5円玉史上最多発行年'],
+        ['昭和', 51, 1976, 200000, ''],
+        ['昭和', 52, 1977, 340000, ''],
+        ['昭和', 53, 1978, 318000, ''],
+        ['昭和', 54, 1979, 317000, ''],
+        ['昭和', 55, 1980, 385000, ''],
+        ['昭和', 56, 1981, 95000, ''],
+        ['昭和', 57, 1982, 455000, ''],
+        ['昭和', 58, 1983, 410000, ''],
+        ['昭和', 59, 1984, 202850, ''],
+        ['昭和', 60, 1985, 153150, ''],
+        ['昭和', 61, 1986, 113960, ''],
+        ['昭和', 62, 1987, 631775, ''],
+        ['昭和', 63, 1988, 396120, ''],
+        ['昭和', 64, 1989, 67332, '昭和最終年'],
+        ['平成', 1, 1989, 960660, '平成元年'],
+        ['平成', 2, 1990, 520953, ''],
+        ['平成', 3, 1991, 517120, ''],
+        ['平成', 4, 1992, 301130, ''],
+        ['平成', 5, 1993, 413240, ''],
+        ['平成', 6, 1994, 197767, ''],
+        ['平成', 7, 1995, 351874, ''],
+        ['平成', 8, 1996, 207213, ''],
+        ['平成', 9, 1997, 239086, ''],
+        ['平成', 10, 1998, 172612, ''],
+        ['平成', 11, 1999, 60120, ''],
+        ['平成', 12, 2000, 9030, ''],
+        ['平成', 13, 2001, 78025, ''],
+        ['平成', 14, 2002, 143662, ''],
+        ['平成', 15, 2003, 102406, ''],
+        ['平成', 16, 2004, 70903, ''],
+        ['平成', 17, 2005, 16029, ''],
+        ['平成', 18, 2006, 9594, ''],
+        ['平成', 19, 2007, 9904, ''],
+        ['平成', 20, 2008, 9811, ''],
+        ['平成', 21, 2009, 4003, '少額発行年'],
+        ['平成', 22, 2010, 510, '特年・ミントセット限定'],
+        ['平成', 23, 2011, 456, '特年・ミントセット限定'],
+        ['平成', 24, 2012, 659, '特年・ミントセット限定'],
+        ['平成', 25, 2013, 554, '特年・ミントセット限定'],
+        ['平成', 26, 2014, 87538, '一般流通復活'],
+        ['平成', 27, 2015, 105004, ''],
+        ['平成', 28, 2016, 35064, ''],
+        ['平成', 29, 2017, 33927, ''],
+        ['平成', 30, 2018, 17960, ''],
+        ['平成', 31, 2019, 16946, '平成最終年'],
+        ['令和', 1, 2019, 20574, '令和元年'],
+        ['令和', 2, 2020, 29528, ''],
+        ['令和', 3, 2021, 10133, ''],
+        ['令和', 4, 2022, 574, '特年・ミントセット限定'],
+        ['令和', 5, 2023, 463, '特年・ミントセット限定'],
+        ['令和', 6, 2024, 511, '特年・ミントセット限定'],
+      ],
+      10: [
+        ['昭和', 26, 1951, 101068, 'ギザ10（側面溝あり初年度）'],
+        ['昭和', 27, 1952, 486632, 'ギザ10'],
+        ['昭和', 28, 1953, 466300, 'ギザ10'],
+        ['昭和', 29, 1954, 520900, 'ギザ10'],
+        ['昭和', 30, 1955, 123100, 'ギザ10'],
+        ['昭和', 32, 1957, 50000, 'ギザ10（少額年）'],
+        ['昭和', 33, 1958, 25000, 'ギザ10最終年・ギザ10最小発行'],
+        ['昭和', 34, 1959, 62400, 'ギザなし10円初年度'],
+        ['昭和', 35, 1960, 225900, ''],
+        ['昭和', 36, 1961, 229900, ''],
+        ['昭和', 37, 1962, 284200, ''],
+        ['昭和', 38, 1963, 411300, ''],
+        ['昭和', 39, 1964, 479200, ''],
+        ['昭和', 40, 1965, 387600, ''],
+        ['昭和', 41, 1966, 395900, ''],
+        ['昭和', 42, 1967, 158900, ''],
+        ['昭和', 43, 1968, 363600, ''],
+        ['昭和', 44, 1969, 414800, ''],
+        ['昭和', 45, 1970, 382700, ''],
+        ['昭和', 46, 1971, 610050, ''],
+        ['昭和', 47, 1972, 634950, ''],
+        ['昭和', 48, 1973, 1345000, ''],
+        ['昭和', 49, 1974, 1780000, '10円玉史上最多発行年'],
+        ['昭和', 50, 1975, 1280260, ''],
+        ['昭和', 51, 1976, 1369740, ''],
+        ['昭和', 52, 1977, 1467000, ''],
+        ['昭和', 53, 1978, 1435000, ''],
+        ['昭和', 54, 1979, 1207000, ''],
+        ['昭和', 55, 1980, 1127000, ''],
+        ['昭和', 56, 1981, 1369000, ''],
+        ['昭和', 57, 1982, 890000, ''],
+        ['昭和', 58, 1983, 870000, ''],
+        ['昭和', 59, 1984, 533850, ''],
+        ['昭和', 60, 1985, 335150, ''],
+        ['昭和', 61, 1986, 68960, '昭和後期10円の特年'],
+        ['昭和', 62, 1987, 165775, ''],
+        ['昭和', 63, 1988, 618112, ''],
+        ['昭和', 64, 1989, 74692, '昭和最終年'],
+        ['平成', 1, 1989, 666308, '平成元年'],
+        ['平成', 2, 1990, 754953, ''],
+        ['平成', 3, 1991, 632120, ''],
+        ['平成', 4, 1992, 538130, ''],
+        ['平成', 5, 1993, 249240, ''],
+        ['平成', 6, 1994, 190767, ''],
+        ['平成', 7, 1995, 248874, ''],
+        ['平成', 8, 1996, 546213, ''],
+        ['平成', 9, 1997, 491086, ''],
+        ['平成', 10, 1998, 410612, ''],
+        ['平成', 11, 1999, 359120, ''],
+        ['平成', 12, 2000, 315026, ''],
+        ['平成', 13, 2001, 542024, ''],
+        ['平成', 14, 2002, 455667, ''],
+        ['平成', 15, 2003, 551406, ''],
+        ['平成', 16, 2004, 592903, ''],
+        ['平成', 17, 2005, 504029, ''],
+        ['平成', 18, 2006, 440594, ''],
+        ['平成', 19, 2007, 388904, ''],
+        ['平成', 20, 2008, 362811, ''],
+        ['平成', 21, 2009, 338003, ''],
+        ['平成', 22, 2010, 328905, ''],
+        ['平成', 23, 2011, 255936, ''],
+        ['平成', 24, 2012, 279211, ''],
+        ['平成', 25, 2013, 100892, ''],
+        ['平成', 26, 2014, 171013, ''],
+        ['平成', 27, 2015, 203004, ''],
+        ['平成', 28, 2016, 198064, ''],
+        ['平成', 29, 2017, 124927, ''],
+        ['平成', 30, 2018, 178960, ''],
+        ['平成', 31, 2019, 197594, '平成最終年'],
+        ['令和', 1, 2019, 137026, '令和元年'],
+        ['令和', 2, 2020, 276428, ''],
+        ['令和', 3, 2021, 139133, ''],
+        ['令和', 4, 2022, 129874, ''],
+        ['令和', 5, 2023, 27927, '近年の10円玉では少なめ'],
+        ['令和', 6, 2024, 109027, ''],
+      ],
+      50: [
+        // 初期ニッケル無孔・有孔を含む全71種
+        ['昭和', 30, 1955, 63700, '初代50円ニッケル貨（無孔）'],
+        ['昭和', 31, 1956, 91300, '50円ニッケル貨（無孔）'],
+        ['昭和', 32, 1957, 39000, '50円ニッケル貨（無孔）'],
+        ['昭和', 33, 1958, 18000, '50円ニッケル貨（無孔最終年）'],
+        ['昭和', 34, 1959, 23900, '穴あき50円ニッケル貨（大型）'],
+        ['昭和', 35, 1960, 6000, '50円ニッケル貨（有孔特年）'],
+        ['昭和', 36, 1961, 16000, '50円ニッケル貨（有孔）'],
+        ['昭和', 37, 1962, 50300, '50円ニッケル貨（有孔）'],
+        ['昭和', 38, 1963, 55000, '50円ニッケル貨（有孔）'],
+        ['昭和', 39, 1964, 69200, '50円ニッケル貨（有孔）'],
+        ['昭和', 40, 1965, 189700, '50円ニッケル貨（有孔）'],
+        ['昭和', 41, 1966, 171500, '50円ニッケル貨（有孔最終年）'],
+        ['昭和', 42, 1967, 238400, '現行サイズ白銅50円玉 初年度'],
+        ['昭和', 43, 1968, 200000, ''],
+        ['昭和', 44, 1969, 210900, ''],
+        ['昭和', 45, 1970, 269800, ''],
+        ['昭和', 46, 1971, 80950, ''],
+        ['昭和', 47, 1972, 138980, ''],
+        ['昭和', 48, 1973, 200970, ''],
+        ['昭和', 49, 1974, 470000, '50円玉史上最多発行年'],
+        ['昭和', 50, 1975, 238120, ''],
+        ['昭和', 51, 1976, 241880, ''],
+        ['昭和', 52, 1977, 176000, ''],
+        ['昭和', 53, 1978, 234000, ''],
+        ['昭和', 54, 1979, 110000, ''],
+        ['昭和', 55, 1980, 51000, ''],
+        ['昭和', 56, 1981, 179000, ''],
+        ['昭和', 57, 1982, 30000, ''],
+        ['昭和', 58, 1983, 30000, ''],
+        ['昭和', 59, 1984, 29850, ''],
+        ['昭和', 60, 1985, 10150, ''],
+        ['昭和', 61, 1986, 9960, ''],
+        ['昭和', 62, 1987, 775, '伝説の超特年（ミントセットのみ・SSR）', 'SSR'],
+        ['昭和', 63, 1988, 109112, ''],
+        ['平成', 1, 1989, 245000, '平成元年'],
+        ['平成', 2, 1990, 274953, ''],
+        ['平成', 3, 1991, 209120, ''],
+        ['平成', 4, 1992, 49130, ''],
+        ['平成', 5, 1993, 51240, ''],
+        ['平成', 6, 1994, 65767, ''],
+        ['平成', 7, 1995, 111874, ''],
+        ['平成', 8, 1996, 82213, ''],
+        ['平成', 9, 1997, 150086, ''],
+        ['平成', 10, 1998, 100612, ''],
+        ['平成', 11, 1999, 59120, ''],
+        ['平成', 12, 2000, 7026, ''],
+        ['平成', 13, 2001, 8024, ''],
+        ['平成', 14, 2002, 11667, ''],
+        ['平成', 15, 2003, 10406, ''],
+        ['平成', 16, 2004, 9903, ''],
+        ['平成', 17, 2005, 10029, ''],
+        ['平成', 18, 2006, 10594, ''],
+        ['平成', 19, 2007, 9904, ''],
+        ['平成', 20, 2008, 8811, ''],
+        ['平成', 21, 2009, 5003, ''],
+        ['平成', 22, 2010, 510, '特年・ミントセット限定'],
+        ['平成', 23, 2011, 456, '特年・ミントセット限定'],
+        ['平成', 24, 2012, 659, '特年・ミントセット限定'],
+        ['平成', 25, 2013, 554, '特年・ミントセット限定'],
+        ['平成', 26, 2014, 7538, ''],
+        ['平成', 27, 2015, 47004, ''],
+        ['平成', 28, 2016, 46064, ''],
+        ['平成', 29, 2017, 20927, ''],
+        ['平成', 30, 2018, 56960, ''],
+        ['平成', 31, 2019, 1118, '平成最終年・超特年'],
+        ['令和', 1, 2019, 42502, '令和元年'],
+        ['令和', 2, 2020, 58428, ''],
+        ['令和', 3, 2021, 9133, ''],
+        ['令和', 4, 2022, 574, '特年・ミントセット限定'],
+        ['令和', 5, 2023, 463, '特年・ミントセット限定'],
+        ['令和', 6, 2024, 511, '特年・ミントセット限定'],
+      ],
+      100: [
+        ['昭和', 42, 1967, 432200, '現行白銅100円玉 初年度'],
+        ['昭和', 43, 1968, 471000, ''],
+        ['昭和', 44, 1969, 323700, ''],
+        ['昭和', 45, 1970, 237100, ''],
+        ['昭和', 46, 1971, 481050, ''],
+        ['昭和', 47, 1972, 468950, ''],
+        ['昭和', 48, 1973, 680000, '100円玉史上最多発行年'],
+        ['昭和', 49, 1974, 660000, ''],
+        ['昭和', 50, 1975, 437160, ''],
+        ['昭和', 51, 1976, 322840, ''],
+        ['昭和', 52, 1977, 440000, ''],
+        ['昭和', 53, 1978, 292000, ''],
+        ['昭和', 54, 1979, 382000, ''],
+        ['昭和', 55, 1980, 588000, ''],
+        ['昭和', 56, 1981, 348000, ''],
+        ['昭和', 57, 1982, 110000, ''],
+        ['昭和', 58, 1983, 50000, '昭和後期100円少額年'],
+        ['昭和', 59, 1984, 41850, '昭和100円玉の特年'],
+        ['昭和', 60, 1985, 58150, ''],
+        ['昭和', 61, 1986, 99960, ''],
+        ['昭和', 62, 1987, 193775, ''],
+        ['昭和', 63, 1988, 363112, ''],
+        ['平成', 1, 1989, 369000, '平成元年'],
+        ['平成', 2, 1990, 444953, ''],
+        ['平成', 3, 1991, 375120, ''],
+        ['平成', 4, 1992, 211130, ''],
+        ['平成', 5, 1993, 82240, ''],
+        ['平成', 6, 1994, 81767, ''],
+        ['平成', 7, 1995, 92874, ''],
+        ['平成', 8, 1996, 237213, ''],
+        ['平成', 9, 1997, 272086, ''],
+        ['平成', 10, 1998, 252612, ''],
+        ['平成', 11, 1999, 179120, ''],
+        ['平成', 12, 2000, 172026, ''],
+        ['平成', 13, 2001, 8024, '平成100円玉の超特年'],
+        ['平成', 14, 2002, 10667, '平成100円玉の特年'],
+        ['平成', 15, 2003, 98406, ''],
+        ['平成', 16, 2004, 204903, ''],
+        ['平成', 17, 2005, 300029, ''],
+        ['平成', 18, 2006, 216594, ''],
+        ['平成', 19, 2007, 129904, ''],
+        ['平成', 20, 2008, 93811, ''],
+        ['平成', 21, 2009, 115003, ''],
+        ['平成', 22, 2010, 67905, ''],
+        ['平成', 23, 2011, 178936, ''],
+        ['平成', 24, 2012, 402211, ''],
+        ['平成', 25, 2013, 608892, ''],
+        ['平成', 26, 2014, 445013, ''],
+        ['平成', 27, 2015, 410004, ''],
+        ['平成', 28, 2016, 461064, ''],
+        ['平成', 29, 2017, 518927, ''],
+        ['平成', 30, 2018, 567960, ''],
+        ['平成', 31, 2019, 302006, '平成最終年'],
+        ['令和', 1, 2019, 58614, '令和元年（比較的希少）'],
+        ['令和', 2, 2020, 453428, ''],
+        ['令和', 3, 2021, 366133, ''],
+        ['令和', 4, 2022, 293274, ''],
+        ['令和', 5, 2023, 192927, ''],
+        ['令和', 6, 2024, 163827, ''],
+      ],
+      500: [
+        ['昭和', 57, 1982, 300000, '初代白銅500円玉 初年度'],
+        ['昭和', 58, 1983, 240000, '初代白銅500円玉'],
+        ['昭和', 59, 1984, 342850, '初代白銅500円玉'],
+        ['昭和', 60, 1985, 97150, '初代白銅500円玉'],
+        ['昭和', 61, 1986, 49960, '初代白銅500円玉'],
+        ['昭和', 62, 1987, 2775, '500円玉史上最少発行の特年'],
+        ['昭和', 63, 1988, 148218, '初代白銅500円玉'],
+        ['昭和', 64, 1989, 16042, '昭和最終年（特年）'],
+        ['平成', 1, 1989, 192852, '平成元年・白銅貨'],
+        ['平成', 2, 1990, 159953, '白銅貨'],
+        ['平成', 3, 1991, 170120, '白銅貨'],
+        ['平成', 4, 1992, 88130, '白銅貨'],
+        ['平成', 5, 1993, 132240, '白銅貨'],
+        ['平成', 6, 1994, 105772, '白銅貨'],
+        ['平成', 7, 1995, 182869, '白銅貨'],
+        ['平成', 8, 1996, 99213, '白銅貨'],
+        ['平成', 9, 1997, 173090, '白銅貨'],
+        ['平成', 10, 1998, 214608, '白銅貨'],
+        ['平成', 11, 1999, 165120, '白銅500円玉 最終年'],
+        ['平成', 12, 2000, 595969, '2代目ニッケル黄銅500円玉 初年度'],
+        ['平成', 13, 2001, 608051, '500円玉史上最多発行年'],
+        ['平成', 14, 2002, 504661, 'ニッケル黄銅貨'],
+        ['平成', 15, 2003, 438405, 'ニッケル黄銅貨'],
+        ['平成', 16, 2004, 356903, 'ニッケル黄銅貨'],
+        ['平成', 17, 2005, 345030, 'ニッケル黄銅貨'],
+        ['平成', 18, 2006, 381593, 'ニッケル黄銅貨'],
+        ['平成', 19, 2007, 409903, 'ニッケル黄銅貨'],
+        ['平成', 20, 2008, 432811, 'ニッケル黄銅貨'],
+        ['平成', 21, 2009, 343003, 'ニッケル黄銅貨'],
+        ['平成', 22, 2010, 406905, 'ニッケル黄銅貨'],
+        ['平成', 23, 2011, 301936, 'ニッケル黄銅貨'],
+        ['平成', 24, 2012, 267211, 'ニッケル黄銅貨'],
+        ['平成', 25, 2013, 137892, 'ニッケル黄銅貨'],
+        ['平成', 26, 2014, 167013, 'ニッケル黄銅貨'],
+        ['平成', 27, 2015, 143004, 'ニッケル黄銅貨'],
+        ['平成', 28, 2016, 221064, 'ニッケル黄銅貨'],
+        ['平成', 29, 2017, 426327, 'ニッケル黄銅貨'],
+        ['平成', 30, 2018, 286192, 'ニッケル黄銅貨'],
+        ['平成', 31, 2019, 126164, '平成最終年'],
+        ['令和', 1, 2019, 76956, '令和元年（少なめ）'],
+        ['令和', 2, 2020, 143928, 'ニッケル黄銅貨'],
+        ['令和', 3, 2021, 184711, 'ニッケル黄銅貨 最終年', null, '旧'],
+        ['令和', 3, 2021, 170222, '3代目バイカラー・クラッド貨 初年度', null, 'バイカラー'],
+        ['令和', 4, 2022, 302474, 'バイカラー・クラッド貨', null, 'バイカラー'],
+        ['令和', 5, 2023, 362527, 'バイカラー・クラッド貨', null, 'バイカラー'],
+        ['令和', 6, 2024, 336227, 'バイカラー・クラッド貨', null, 'バイカラー'],
+      ]
+    };
+
+    // 全397種のマスター配列と額面別インデックスを構築
+    const ALL_COINS = [];
+    const COINS_BY_DENOM = { 1: [], 5: [], 10: [], 50: [], 100: [], 500: [] };
+    const COIN_MAP = {};
+
+    (function buildCoinMaster() {
+      const denoms = [1, 5, 10, 50, 100, 500];
+      denoms.forEach(denom => {
+        const list = RAW_MINTAGE_DATA[denom];
+        const totalMintage = list.reduce((acc, item) => acc + item[3], 0);
+
+        list.forEach((item, idx) => {
+          const [era, eraYear, westernYear, mintageThousand, note, forcedRarity, variant] = item;
+          const yearStr = eraYear === 1 ? `${era}元年` : `${era}${eraYear}年`;
+          const variantLabel = variant ? `（${variant}）` : '';
+          const fullName = `${yearStr}${variantLabel} ${denom}円玉`;
+          const id = `${denom}_${era}_${eraYear}${variant ? '_' + variant : ''}`;
+          const probPct = (mintageThousand / totalMintage) * 100;
+
+          // レアリティ判定（CSV準拠：SSR < 5,000千枚 / SR < 50,000千枚 / R < 200,000千枚 / N >= 200,000千枚）
+          let rarity = forcedRarity || 'N';
+          if (!forcedRarity) {
+            if (mintageThousand < 5000) rarity = 'SSR';
+            else if (mintageThousand < 50000) rarity = 'SR';
+            else if (mintageThousand < 200000) rarity = 'R';
+            else rarity = 'N';
+          }
+
+          // 特殊ビジュアル判定（ギザ10 / バイカラー500円）
+          const isGiza10 = (denom === 10 && era === '昭和' && eraYear <= 33);
+          const isBicolor = (denom === 500 && variant === 'バイカラー');
+
+          const coinObj = {
+            id,
+            denom,
+            era,
+            eraYear,
+            westernYear,
+            yearStr,
+            variant: variant || '',
+            fullName,
+            mintageThousand,
+            probPct,
+            weight: mintageThousand,
+            rarity,
+            note: note || '',
+            isGiza10,
+            isBicolor,
+            orderIndex: idx
+          };
+
+          ALL_COINS.push(coinObj);
+          COINS_BY_DENOM[denom].push(coinObj);
+          COIN_MAP[id] = coinObj;
+        });
+      });
+    })();
+
+    /**
+     * =========================================================================
+     * 2. アプリ状態＆localStorage永続化
+     * =========================================================================
+     */
+    const STORAGE_KEY = 'otsuri_gacha_save_v1';
+
+    let appState = {
+      collection: {}, // { [coinId]: { count: number, firstObtainedAt: string } }
+      history: [],    // 最大30件 [{ id, timestamp, bill, paid, change, coins: [coinId...], newIds: [coinId...] }]
+      stats: {
+        totalCheckouts: 0,
+        totalCoins: 0,
+        totalChangeYen: 0
+      },
+      soundEnabled: true
+    };
+
+    // レジ画面の一時状態
+    let registerState = {
+      billAmount: 111,
+      payment: {
+        10000: 0,
+        5000: 0,
+        1000: 1,
+        500: 0,
+        100: 0,
+        50: 0,
+        10: 0,
+        5: 0,
+        1: 0
+      }
+    };
+
+    // アルバム画面のフィルター状態
+    let albumFilter = {
+      denom: 'ALL',
+      era: 'ALL',
+      rarity: 'ALL',
+      owned: 'ALL'
+    };
+
+    function loadSaveData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            appState.collection = parsed.collection || {};
+            appState.history = Array.isArray(parsed.history) ? parsed.history.slice(0, 30) : [];
+            appState.stats = {
+              totalCheckouts: parsed.stats?.totalCheckouts || 0,
+              totalCoins: parsed.stats?.totalCoins || 0,
+              totalChangeYen: parsed.stats?.totalChangeYen || 0
+            };
+            if (typeof parsed.soundEnabled === 'boolean') {
+              appState.soundEnabled = parsed.soundEnabled;
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load save data:', e);
+      }
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Failed to save data:', e);
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 3. Web Audio API 効果音ジェネレーター（外部ファイル不要）
+     * =========================================================================
+     */
+    let audioCtx = null;
+
+    function playTone(freq, type = 'sine', duration = 0.12, delay = 0, gainVal = 0.12) {
+      if (!appState.soundEnabled) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + duration);
+      } catch (e) {
+        // オーディオ非対応環境は無視
+      }
+    }
+
+    function playCoinSound(highestRarity) {
+      if (!appState.soundEnabled) return;
+      // レジ音
+      playTone(1046.5, 'triangle', 0.08, 0, 0.1);
+      playTone(1318.5, 'triangle', 0.14, 0.07, 0.12);
+
+      if (highestRarity === 'SSR') {
+        const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98];
+        notes.forEach((n, i) => playTone(n, 'sine', 0.25, 0.15 + i * 0.06, 0.14));
+      } else if (highestRarity === 'SR') {
+        const notes = [587.33, 739.99, 880.0, 1174.66];
+        notes.forEach((n, i) => playTone(n, 'triangle', 0.2, 0.15 + i * 0.07, 0.12));
+      } else if (highestRarity === 'R') {
+        playTone(880, 'sine', 0.18, 0.16, 0.1);
+        playTone(1174.66, 'sine', 0.22, 0.24, 0.1);
+      }
+    }
+
+    function toggleSound() {
+      appState.soundEnabled = !appState.soundEnabled;
+      saveData();
+      updateSoundButtonUI();
+      if (appState.soundEnabled) playTone(880, 'sine', 0.1, 0, 0.1);
+    }
+
+    function updateSoundButtonUI() {
+      const el = document.getElementById('sound-icon');
+      if (el) el.textContent = appState.soundEnabled ? '🔊 ON' : '🔇 OFF';
+    }
+
+    /**
+     * =========================================================================
+     * 4. レジ計算 & 確率重み付き抽選ロジック
+     * =========================================================================
+     */
+    const ALL_DENOMS = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
+    const CHANGE_DENOMS = [5000, 1000, 500, 100, 50, 10, 5, 1];
+    const COIN_DENOMS = [500, 100, 50, 10, 5, 1];
+
+    function getTotalPaid() {
+      return ALL_DENOMS.reduce((sum, d) => sum + d * (registerState.payment[d] || 0), 0);
+    }
+
+    function calculateChangeBreakdown(changeYen) {
+      const breakdown = { 5000: 0, 1000: 0, 500: 0, 100: 0, 50: 0, 10: 0, 5: 0, 1: 0 };
+      let rem = changeYen;
+      for (const d of CHANGE_DENOMS) {
+        if (rem >= d) {
+          breakdown[d] = Math.floor(rem / d);
+          rem %= d;
+        }
+      }
+      return breakdown;
+    }
+
+    function drawOneCoinByDenom(denom) {
+      const pool = COINS_BY_DENOM[denom];
+      const totalWeight = pool.reduce((s, c) => s + c.weight, 0);
+      let r = Math.random() * totalWeight;
+      for (const coin of pool) {
+        r -= coin.weight;
+        if (r <= 0) return coin;
+      }
+      return pool[pool.length - 1];
+    }
+
+    /**
+     * =========================================================================
+     * 5. レジ画面のUI操作＆描画
+     * =========================================================================
+     */
+    function renderDenominationButtons() {
+      const grid = document.getElementById('denomination-grid');
+      grid.innerHTML = ALL_DENOMS.map(d => {
+        const count = registerState.payment[d] || 0;
+        const isBill = d >= 1000;
+        const activeClass = count > 0
+          ? 'border-amber-400/80 bg-slate-800/90 shadow-md shadow-amber-500/10'
+          : 'border-slate-800 bg-slate-950 hover:border-slate-700';
+
+        return `
+          <div class="rounded-xl border p-2.5 transition flex flex-col justify-between ${activeClass}">
+            <div class="flex items-center justify-between gap-1 mb-2">
+              <span class="text-xs sm:text-sm font-black ${isBill ? 'text-emerald-300' : 'text-amber-300'}">
+                ¥${d.toLocaleString()}
+              </span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 font-bold">
+                ${isBill ? '紙幣' : '硬貨'}
+              </span>
+            </div>
+            <div class="flex items-center justify-between gap-1">
+              <button onclick="adjustPayment(${d}, -1)" class="w-7 h-7 rounded-lg bg-slate-900 hover:bg-slate-700 text-slate-300 font-black text-sm flex items-center justify-center active:scale-90 transition">
+                −
+              </button>
+              <span class="text-sm font-black ${count > 0 ? 'text-white' : 'text-slate-500'}">${count}枚</span>
+              <button onclick="adjustPayment(${d}, 1)" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-white font-black text-sm flex items-center justify-center active:scale-90 transition">
+                ＋
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function adjustPayment(denom, delta) {
+      const next = Math.max(0, Math.min(99, (registerState.payment[denom] || 0) + delta));
+      registerState.payment[denom] = next;
+      playTone(delta > 0 ? 740 : 520, 'sine', 0.05, 0, 0.05);
+      updateRegisterUI();
+    }
+
+    function clearPayment() {
+      ALL_DENOMS.forEach(d => registerState.payment[d] = 0);
+      updateRegisterUI();
+    }
+
+    function onBillInputChange() {
+      const val = parseInt(document.getElementById('bill-input').value, 10);
+      registerState.billAmount = isNaN(val) || val < 1 ? 0 : Math.min(99999, val);
+      updateRegisterUI();
+    }
+
+    function setRandomBill() {
+      const randomVal = Math.floor(Math.random() * 2999) + 1;
+      registerState.billAmount = randomVal;
+      document.getElementById('bill-input').value = randomVal;
+      // 支払額が不足していたら自動でちょうど良い紙幣をセット
+      if (getTotalPaid() < randomVal) {
+        payOptimizeMaxCoins();
+      } else {
+        updateRegisterUI();
+      }
+    }
+
+    function applyPreset(bill, payMap) {
+      registerState.billAmount = bill;
+      document.getElementById('bill-input').value = bill;
+      ALL_DENOMS.forEach(d => registerState.payment[d] = payMap[d] || 0);
+      playTone(880, 'triangle', 0.08, 0, 0.08);
+      updateRegisterUI();
+    }
+
+    function applyMaxChangeRandomPreset() {
+      // お釣りの下3桁が999円（硬貨15枚：500×1, 100×4, 50×1, 10×4, 5×1, 1×4）になる会計＆支払いを自動生成
+      const base = Math.floor(Math.random() * 5) * 1000; // 0, 1000, 2000, 3000, 4000
+      const bill = base + 1; // 1円, 1001円, 2001円...
+      const payNeeded = base + 1000; // 1000円, 2000円, 3000円...
+      const payMap = {};
+      if (payNeeded === 5000) {
+        payMap[5000] = 1;
+      } else {
+        payMap[1000] = payNeeded / 1000;
+      }
+      applyPreset(bill, payMap);
+    }
+
+    function payExactChange() {
+      const bill = registerState.billAmount;
+      if (bill <= 0) return;
+      clearPayment();
+      let rem = bill;
+      for (const d of ALL_DENOMS) {
+        if (rem >= d) {
+          registerState.payment[d] = Math.floor(rem / d);
+          rem %= d;
+        }
+      }
+      updateRegisterUI();
+    }
+
+    function payOptimizeMaxCoins() {
+      const bill = registerState.billAmount;
+      if (bill <= 0) return;
+      clearPayment();
+      // お釣りの下3桁を最大化（999円に近い形）するため、上位の1000円単位で支払う
+      const thousands = Math.floor(bill / 1000) + 1;
+      let rem = thousands * 1000;
+      for (const d of [10000, 5000, 1000]) {
+        if (rem >= d) {
+          registerState.payment[d] = Math.floor(rem / d);
+          rem %= d;
+        }
+      }
+      updateRegisterUI();
+    }
+
+    function updateRegisterUI() {
+      renderDenominationButtons();
+
+      const bill = registerState.billAmount;
+      const paid = getTotalPaid();
+      const change = paid - bill;
+
+      document.getElementById('preview-bill').textContent = `¥${bill.toLocaleString()}`;
+      document.getElementById('preview-paid').textContent = `¥${paid.toLocaleString()}`;
+
+      const changeEl = document.getElementById('preview-change');
+      const statusBadge = document.getElementById('register-status-badge');
+      const coinCountEl = document.getElementById('preview-coin-count');
+      const breakdownBox = document.getElementById('change-breakdown-box');
+      const checkoutBtn = document.getElementById('checkout-btn');
+      const checkoutLabel = document.getElementById('checkout-btn-label');
+
+      if (bill <= 0) {
+        changeEl.textContent = '---';
+        changeEl.className = 'text-2xl sm:text-3xl font-black text-slate-500';
+        statusBadge.textContent = '会計金額を入力';
+        statusBadge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400';
+        coinCountEl.textContent = '硬貨 0枚';
+        breakdownBox.innerHTML = `<p class="text-xs text-center text-slate-500">1円以上の会計金額を入力してください</p>`;
+        checkoutBtn.disabled = true;
+        checkoutLabel.textContent = '会計金額を入力してください';
+        return;
+      }
+
+      if (change < 0) {
+        const shortage = Math.abs(change);
+        changeEl.textContent = `不足 ¥${shortage.toLocaleString()}`;
+        changeEl.className = 'text-xl sm:text-2xl font-black text-rose-400';
+        statusBadge.textContent = '支払額不足';
+        statusBadge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30';
+        coinCountEl.textContent = '硬貨 0枚';
+        breakdownBox.innerHTML = `<p class="text-xs text-center text-rose-400/90 font-bold">あと ¥${shortage.toLocaleString()} 分のお金を追加してください</p>`;
+        checkoutBtn.disabled = true;
+        checkoutLabel.textContent = `支払額が ¥${shortage.toLocaleString()} 不足しています`;
+        return;
+      }
+
+      changeEl.textContent = `¥${change.toLocaleString()}`;
+      changeEl.className = 'text-2xl sm:text-3xl font-black text-amber-400';
+      statusBadge.textContent = 'お会計OK';
+      statusBadge.className = 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+
+      const bd = calculateChangeBreakdown(change);
+      const totalCoins = COIN_DENOMS.reduce((sum, d) => sum + bd[d], 0);
+      coinCountEl.textContent = `硬貨 ${totalCoins}枚`;
+
+      if (change === 0) {
+        breakdownBox.innerHTML = `<p class="text-xs text-center text-slate-400">お釣りなし（ぴったりのお支払いです）</p>`;
+        checkoutBtn.disabled = false;
+        checkoutLabel.textContent = 'お会計する（お釣りなし）';
+        return;
+      }
+
+      // 紙幣と硬貨のバッジ一覧を生成
+      const itemsHtml = [];
+      [5000, 1000].forEach(d => {
+        if (bd[d] > 0) {
+          itemsHtml.push(`
+            <div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-emerald-950/50 border border-emerald-700/40 text-xs">
+              <span class="font-bold text-emerald-300">¥${d.toLocaleString()}札</span>
+              <span class="font-black text-white">× ${bd[d]}枚</span>
+            </div>
+          `);
+        }
+      });
+
+      COIN_DENOMS.forEach(d => {
+        if (bd[d] > 0) {
+          itemsHtml.push(`
+            <div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-xs">
+              <span class="font-bold text-amber-300 flex items-center gap-1.5">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                ${d}円玉
+              </span>
+              <span class="font-black text-white">× ${bd[d]}枚</span>
+            </div>
+          `);
+        }
+      });
+
+      breakdownBox.innerHTML = `<div class="grid grid-cols-2 gap-1.5">${itemsHtml.join('')}</div>`;
+      checkoutBtn.disabled = false;
+      checkoutLabel.textContent = totalCoins > 0
+        ? `お会計して硬貨${totalCoins}枚をガチャる！`
+        : 'お会計する（硬貨のお釣りなし）';
+    }
+
+    /**
+     * =========================================================================
+     * 6. お会計実行＆お釣り硬貨ガチャ抽選
+     * =========================================================================
+     */
+    function executeCheckout() {
+      const bill = registerState.billAmount;
+      const paid = getTotalPaid();
+      const change = paid - bill;
+      if (bill <= 0 || change < 0) return;
+
+      const bd = calculateChangeBreakdown(change);
+      const pulledCoins = [];
+      const newCoinIds = [];
+      const nowStr = new Date().toLocaleString('ja-JP', {
+        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+
+      // 500円 -> 1円の順に硬貨を1枚ずつ抽選
+      COIN_DENOMS.forEach(denom => {
+        const count = bd[denom] || 0;
+        for (let i = 0; i < count; i++) {
+          const coin = drawOneCoinByDenom(denom);
+          const isNew = !appState.collection[coin.id];
+          if (isNew) {
+            appState.collection[coin.id] = { count: 1, firstObtainedAt: nowStr };
+            newCoinIds.push(coin.id);
+          } else {
+            appState.collection[coin.id].count += 1;
+          }
+          pulledCoins.push({ coin, isNew });
+        }
+      });
+
+      // 統計＆履歴更新
+      appState.stats.totalCheckouts += 1;
+      appState.stats.totalCoins += pulledCoins.length;
+      appState.stats.totalChangeYen += change;
+
+      appState.history.unshift({
+        id: Date.now(),
+        timestamp: nowStr,
+        bill,
+        paid,
+        change,
+        coinIds: pulledCoins.map(p => p.coin.id),
+        newIds: newCoinIds
+      });
+      if (appState.history.length > 30) {
+        appState.history = appState.history.slice(0, 30);
+      }
+
+      saveData();
+      updateHeaderProgress();
+
+      // 最高レアリティ判定で効果音再生
+      const rankMap = { N: 1, R: 2, SR: 3, SSR: 4 };
+      let highest = 'N';
+      pulledCoins.forEach(p => {
+        if (rankMap[p.coin.rarity] > rankMap[highest]) highest = p.coin.rarity;
+      });
+      playCoinSound(highest);
+
+      // 結果ステージ描画
+      renderGachaResults(bill, paid, change, pulledCoins, newCoinIds);
+    }
+
+    function getCoinVisualHtml(coin, sizeClass = 'w-14 h-14 text-sm', isSilhouette = false) {
+      if (isSilhouette) {
+        const holeClass = (coin.denom === 5 || coin.denom === 50) ? 'coin-hole' : '';
+        return `
+          <div class="coin-visual bg-slate-800/80 border-2 border-dashed border-slate-700 text-slate-600 ${sizeClass} ${holeClass}">
+            <span class="relative z-10">${coin.denom}</span>
+          </div>
+        `;
+      }
+
+      let colorClass = `coin-${coin.denom}`;
+      if (coin.isGiza10) colorClass += ' coin-10-giza';
+      if (coin.isBicolor) colorClass = 'coin-500-bicolor';
+      const holeClass = (coin.denom === 5 || coin.denom === 50) ? 'coin-hole' : '';
+
+      return `
+        <div class="coin-visual ${colorClass} ${sizeClass} ${holeClass}">
+          <span class="relative z-10 drop-shadow-sm">${coin.denom}</span>
+        </div>
+      `;
+    }
+
+    function getRarityBadgeHtml(rarity) {
+      const styles = {
+        N: 'bg-slate-700 text-slate-200 border-slate-600',
+        R: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/50',
+        SR: 'bg-amber-500/25 text-amber-300 border-amber-400',
+        SSR: 'bg-gradient-to-r from-fuchsia-500 via-amber-400 to-cyan-400 text-slate-950 font-black border-white/60'
+      };
+      return `<span class="text-[11px] font-extrabold px-2 py-0.5 rounded-md border ${styles[rarity] || styles.N}">${rarity}</span>`;
+    }
+
+    function renderGachaResults(bill, paid, change, pulledCoins, newCoinIds) {
+      const section = document.getElementById('gacha-result-section');
+      const grid = document.getElementById('gacha-cards-grid');
+      const summaryText = document.getElementById('result-summary-text');
+      const newBadge = document.getElementById('result-new-count-badge');
+
+      section.classList.remove('hidden');
+      summaryText.textContent = `会計 ¥${bill.toLocaleString()} / 支払 ¥${paid.toLocaleString()} → お釣り ¥${change.toLocaleString()}（硬貨 ${pulledCoins.length}枚獲得）`;
+
+      if (newCoinIds.length > 0) {
+        newBadge.textContent = `初獲得 NEW! ×${newCoinIds.length}`;
+        newBadge.classList.remove('hidden');
+      } else {
+        newBadge.classList.add('hidden');
+      }
+
+      if (pulledCoins.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-8 text-center text-slate-400 text-sm bg-slate-950/60 rounded-xl border border-slate-800">
+            今回のお釣りには硬貨が含まれていませんでした。端数が出る金額でお試しください！
+          </div>
+        `;
+        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+      }
+
+      grid.innerHTML = pulledCoins.map((item, idx) => {
+        const { coin, isNew } = item;
+        const delayMs = Math.min(idx * 55, 750);
+        const ownedCount = appState.collection[coin.id]?.count || 1;
+
+        return `
+          <div onclick="openCoinModal('${coin.id}')" style="animation-delay: ${delayMs}ms"
+            class="opacity-0 animate-pop-in cursor-pointer rounded-2xl p-3.5 flex flex-col items-center text-center justify-between transition hover:-translate-y-1 card-${coin.rarity}">
+            
+            <!-- 上部バッジ行 -->
+            <div class="w-full flex items-center justify-between gap-1 mb-2">
+              ${getRarityBadgeHtml(coin.rarity)}
+              ${isNew
+                ? '<span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500 text-white shadow">NEW!</span>'
+                : `<span class="text-[10px] font-bold text-slate-400">所持×${ownedCount}</span>`
+              }
+            </div>
+
+            <!-- 硬貨グラフィック -->
+            <div class="my-2">
+              ${getCoinVisualHtml(coin, 'w-14 h-14 text-base')}
+            </div>
+
+            <!-- 年号＆額面 -->
+            <div class="w-full mt-1">
+              <div class="text-xs sm:text-sm font-black text-white leading-tight">
+                ${coin.yearStr}${coin.variant ? `<span class="block text-[10px] text-amber-300">${coin.variant}</span>` : ''}
+              </div>
+              <div class="text-[11px] font-bold text-slate-300 mt-0.5">${coin.denom}円玉</div>
+            </div>
+
+            <!-- 出現率・発行枚数 -->
+            <div class="w-full mt-2.5 pt-2 border-t border-white/10 text-[10px] text-slate-400 space-y-0.5">
+              <div class="flex justify-between">
+                <span>出現率</span>
+                <span class="font-bold text-slate-200">${coin.probPct < 0.01 ? coin.probPct.toFixed(4) : coin.probPct.toFixed(3)}%</span>
+              </div>
+              <div class="flex justify-between">
+                <span>発行数</span>
+                <span class="font-mono">${coin.mintageThousand.toLocaleString()}千枚</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    /**
+     * =========================================================================
+     * 7. 硬貨アルバムタブ描画＆フィルタリング
+     * =========================================================================
+     */
+    function setAlbumFilter(key, value) {
+      albumFilter[key] = value;
+      if (key === 'denom') {
+        document.querySelectorAll('.denom-filter-btn').forEach(btn => {
+          const isMatch = String(btn.dataset.denom) === String(value);
+          btn.className = isMatch
+            ? 'denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-extrabold bg-amber-500 text-slate-950 transition'
+            : 'denom-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+        });
+      }
+      renderAlbum();
+    }
+
+    function renderAlbum() {
+      const ownedTotal = Object.keys(appState.collection).length;
+      const pct = ((ownedTotal / ALL_COINS.length) * 100).toFixed(1);
+
+      document.getElementById('album-progress-count').textContent = ownedTotal;
+      document.getElementById('album-progress-pct').textContent = `${pct}%`;
+      document.getElementById('album-progress-bar').style.width = `${pct}%`;
+
+      const filtered = ALL_COINS.filter(coin => {
+        if (albumFilter.denom !== 'ALL' && coin.denom !== Number(albumFilter.denom)) return false;
+        if (albumFilter.era !== 'ALL' && coin.era !== albumFilter.era) return false;
+        if (albumFilter.rarity !== 'ALL' && coin.rarity !== albumFilter.rarity) return false;
+        const isOwned = !!appState.collection[coin.id];
+        if (albumFilter.owned === 'OWNED' && !isOwned) return false;
+        if (albumFilter.owned === 'UNOWNED' && isOwned) return false;
+        return true;
+      });
+
+      document.getElementById('album-filter-summary').textContent = `表示中: ${filtered.length}種 / 全${ALL_COINS.length}種`;
+
+      const grid = document.getElementById('album-grid');
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center bg-slate-900/60 border border-slate-800 rounded-2xl text-slate-400 text-sm">
+            条件に一致する硬貨がありません。フィルターを変更してください。
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(coin => {
+        const entry = appState.collection[coin.id];
+        const isOwned = !!entry;
+
+        if (!isOwned) {
+          return `
+            <div onclick="openCoinModal('${coin.id}')"
+              class="cursor-pointer rounded-2xl p-3 bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 flex flex-col items-center text-center justify-between opacity-70 hover:opacity-100 transition">
+              <div class="w-full flex items-center justify-between mb-1.5">
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-900 text-slate-500 border border-slate-800">${coin.rarity}</span>
+                <span class="text-[10px] text-slate-600 font-bold">未所持</span>
+              </div>
+              <div class="my-1.5">
+                ${getCoinVisualHtml(coin, 'w-11 h-11 text-xs', true)}
+              </div>
+              <div>
+                <div class="text-xs font-bold text-slate-500">${coin.yearStr}${coin.variant ? `(${coin.variant})` : ''}</div>
+                <div class="text-[10px] text-slate-600">${coin.denom}円玉</div>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div onclick="openCoinModal('${coin.id}')"
+            class="cursor-pointer rounded-2xl p-3 flex flex-col items-center text-center justify-between transition hover:-translate-y-0.5 card-${coin.rarity}">
+            <div class="w-full flex items-center justify-between mb-1.5">
+              ${getRarityBadgeHtml(coin.rarity)}
+              <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-slate-950/80 text-amber-300 border border-amber-500/30">
+                ×${entry.count}
+              </span>
+            </div>
+            <div class="my-1.5">
+              ${getCoinVisualHtml(coin, 'w-11 h-11 text-xs', false)}
+            </div>
+            <div>
+              <div class="text-xs font-black text-white leading-tight">${coin.yearStr}${coin.variant ? `<span class="block text-[9px] text-amber-300">${coin.variant}</span>` : ''}</div>
+              <div class="text-[10px] font-bold text-slate-300">${coin.denom}円玉</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * =========================================================================
+     * 8. 硬貨詳細モーダル
+     * =========================================================================
+     */
+    function openCoinModal(coinId) {
+      const coin = COIN_MAP[coinId];
+      if (!coin) return;
+      const entry = appState.collection[coinId];
+      const isOwned = !!entry;
+
+      const modal = document.getElementById('coin-detail-modal');
+      const body = document.getElementById('modal-body');
+
+      body.innerHTML = `
+        <div class="flex flex-col items-center text-center pt-2">
+          <div class="mb-3">
+            ${getCoinVisualHtml(coin, 'w-20 h-20 text-xl', !isOwned)}
+          </div>
+          <div class="flex items-center gap-2 mb-1">
+            ${getRarityBadgeHtml(coin.rarity)}
+            <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">西暦 ${coin.westernYear}年</span>
+          </div>
+          <h3 class="text-xl font-black text-white mt-1">${coin.fullName}</h3>
+          ${coin.note ? `<p class="text-xs text-amber-300 font-bold mt-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">${coin.note}</p>` : ''}
+        </div>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2.5 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-400">所持ステータス</span>
+            <span class="font-extrabold ${isOwned ? 'text-emerald-400' : 'text-slate-500'}">
+              ${isOwned ? `所持済み（累計 ${entry.count}枚）` : '未所持'}
+            </span>
+          </div>
+          ${isOwned ? `
+          <div class="flex justify-between">
+            <span class="text-slate-400">初獲得日時</span>
+            <span class="text-slate-200 font-mono">${entry.firstObtainedAt}</span>
+          </div>` : ''}
+          <div class="flex justify-between">
+            <span class="text-slate-400">造幣局 製造枚数</span>
+            <span class="font-bold text-white">${coin.mintageThousand.toLocaleString()} 千枚（約 ${(coin.mintageThousand * 1000).toLocaleString()} 枚）</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">${coin.denom}円玉内の出現確率</span>
+            <span class="font-extrabold text-cyan-300">${coin.probPct < 0.01 ? coin.probPct.toFixed(4) : coin.probPct.toFixed(3)}%</span>
+          </div>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeCoinModal(event) {
+      if (event && event.target !== event.currentTarget) return;
+      document.getElementById('coin-detail-modal').classList.add('hidden');
+    }
+
+    /**
+     * =========================================================================
+     * 9. 履歴・データ管理タブ描画
+     * =========================================================================
+     */
+    function renderHistoryAndStats() {
+      // レアリティ別コンプリート率
+      const rarities = [
+        { key: 'SSR', label: 'SSR（特年・超希少）', color: 'from-fuchsia-500 via-amber-400 to-cyan-400', text: 'text-fuchsia-300' },
+        { key: 'SR', label: 'SR（希少）', color: 'from-amber-500 to-yellow-300', text: 'text-amber-300' },
+        { key: 'R', label: 'R（やや希少）', color: 'from-cyan-500 to-emerald-400', text: 'text-cyan-300' },
+        { key: 'N', label: 'N（通常流通）', color: 'from-slate-400 to-slate-200', text: 'text-slate-200' }
+      ];
+
+      const statsHtml = rarities.map(r => {
+        const totalInRarity = ALL_COINS.filter(c => c.rarity === r.key);
+        const ownedInRarity = totalInRarity.filter(c => !!appState.collection[c.id]);
+        const pct = totalInRarity.length > 0 ? ((ownedInRarity.length / totalInRarity.length) * 100).toFixed(1) : '0.0';
+
+        return `
+          <div>
+            <div class="flex justify-between items-center text-xs mb-1">
+              <span class="font-extrabold ${r.text}">${r.label}</span>
+              <span class="font-bold text-slate-300">${ownedInRarity.length} / ${totalInRarity.length}種 (${pct}%)</span>
+            </div>
+            <div class="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+              <div class="h-full bg-gradient-to-r ${r.color} transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('rarity-stats-container').innerHTML = statsHtml;
+
+      // プレイ統計
+      document.getElementById('stat-total-checkouts').textContent = `${appState.stats.totalCheckouts.toLocaleString()} 回`;
+      document.getElementById('stat-total-coins').textContent = `${appState.stats.totalCoins.toLocaleString()} 枚`;
+      document.getElementById('stat-total-change-yen').textContent = `¥${appState.stats.totalChangeYen.toLocaleString()}`;
+
+      // 直近30件の履歴
+      const historyList = document.getElementById('history-list');
+      document.getElementById('history-count-badge').textContent = `${appState.history.length} / 30 件`;
+
+      if (appState.history.length === 0) {
+        historyList.innerHTML = `
+          <div class="py-10 text-center text-slate-500 text-xs bg-slate-950/60 border border-slate-800 rounded-xl">
+            まだお会計履歴がありません。「レジでお会計」タブからガチャを引いてみましょう！
+          </div>
+        `;
+        return;
+      }
+
+      historyList.innerHTML = appState.history.map(item => {
+        const newSet = new Set(item.newIds || []);
+        const coinsHtml = item.coinIds.length > 0
+          ? item.coinIds.map(cid => {
+              const c = COIN_MAP[cid];
+              if (!c) return '';
+              const isNew = newSet.has(cid);
+              const badgeBorder = c.rarity === 'SSR' ? 'border-fuchsia-400 bg-fuchsia-950/40 text-fuchsia-200'
+                : c.rarity === 'SR' ? 'border-amber-400/70 bg-amber-950/40 text-amber-200'
+                : c.rarity === 'R' ? 'border-cyan-400/60 bg-cyan-950/40 text-cyan-200'
+                : 'border-slate-700 bg-slate-900 text-slate-300';
+
+              return `
+                <button onclick="openCoinModal('${c.id}')" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-bold ${badgeBorder} hover:brightness-125 transition">
+                  <span>[${c.rarity}]</span>
+                  <span>${c.yearStr}${c.variant ? `(${c.variant})` : ''} ${c.denom}円</span>
+                  ${isNew ? '<span class="px-1 rounded bg-rose-500 text-white text-[9px] font-black">NEW</span>' : ''}
+                </button>
+              `;
+            }).join('')
+          : '<span class="text-xs text-slate-500">硬貨のお釣りなし</span>';
+
+        return `
+          <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-slate-800/80 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-slate-400 font-mono">${item.timestamp}</span>
+                ${item.newIds && item.newIds.length > 0 ? `<span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-extrabold text-[10px]">NEW ×${item.newIds.length}</span>` : ''}
+              </div>
+              <div class="font-bold text-slate-300">
+                会計 <span class="text-white">¥${item.bill.toLocaleString()}</span> /
+                支払 <span class="text-cyan-300">¥${item.paid.toLocaleString()}</span> →
+                お釣り <span class="text-amber-400 font-black">¥${item.change.toLocaleString()}</span>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${coinsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function showResetConfirm() {
+      document.getElementById('reset-step-1').classList.add('hidden');
+      document.getElementById('reset-step-2').classList.remove('hidden');
+    }
+
+    function cancelReset() {
+      document.getElementById('reset-step-2').classList.add('hidden');
+      document.getElementById('reset-step-1').classList.remove('hidden');
+    }
+
+    function confirmResetData() {
+      appState.collection = {};
+      appState.history = [];
+      appState.stats = { totalCheckouts: 0, totalCoins: 0, totalChangeYen: 0 };
+      saveData();
+      cancelReset();
+      updateHeaderProgress();
+      renderHistoryAndStats();
+      renderAlbum();
+      document.getElementById('gacha-result-section').classList.add('hidden');
+      showToast('セーブデータを初期化しました');
+    }
+
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = 'bg-slate-800 border border-slate-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl animate-pop-in';
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.remove();
+      }, 2600);
+    }
+
+    /**
+     * =========================================================================
+     * 10. タブ切り替え＆初期化
+     * =========================================================================
+     */
+    function switchTab(tabName) {
+      ['register', 'album', 'history'].forEach(name => {
+        const section = document.getElementById(`tab-${name}`);
+        const btn = document.getElementById(`tab-btn-${name}`);
+        if (name === tabName) {
+          section.classList.remove('hidden');
+          btn.className = 'tab-btn flex-1 sm:flex-none px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-amber-400 text-amber-400 transition flex items-center justify-center gap-1.5';
+        } else {
+          section.classList.add('hidden');
+          btn.className = 'tab-btn flex-1 sm:flex-none px-4 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center justify-center gap-1.5';
+        }
+      });
+
+      if (tabName === 'album') renderAlbum();
+      if (tabName === 'history') renderHistoryAndStats();
+    }
+
+    function updateHeaderProgress() {
+      const owned = Object.keys(appState.collection).length;
+      const total = ALL_COINS.length;
+      const pct = ((owned / total) * 100).toFixed(1);
+      document.getElementById('header-progress-text').textContent = `${owned} / ${total}`;
+      document.getElementById('header-progress-pct').textContent = `(${pct}%)`;
+    }
+
+    window.onload = function () {
+      loadSaveData();
+      updateSoundButtonUI();
+      updateHeaderProgress();
+      updateRegisterUI();
+    };
+  </script>
+</body>
+</html>
